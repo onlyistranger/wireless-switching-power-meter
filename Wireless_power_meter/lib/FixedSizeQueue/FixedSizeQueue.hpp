@@ -4,115 +4,133 @@
  * @Author: qingmeijiupiao
  * @LastEditTime: 2024-11-17 23:37:28
  */
-#ifndef FIXEDSIZEQUEUE_HPP
-#define FIXEDSIZEQUEUE_HPP
+#ifndef FixedSizeQueue_HPP
+#define FixedSizeQueue_HPP
 
-#include <deque>
-#include <vector>
-#include <stdexcept>
+
+
 #include <queue>
-
 template <typename T, size_t N>
 class FixedSizeQueue {
 private:
-    std::deque<T> data;           // 主数据存储
-    std::deque<T> max_deque;       // 维护最大值
-    std::deque<T> min_deque;       // 维护最小值
-    T sum = T();                   // 总和
+    std::queue<T> queue;
+    size_t capacity;
+
+    T* array = new T[N];
+    T max;
+    int max_index;
+    T min;
+    int min_index;
+    T total_value;
+    T average;
 
 public:
-    FixedSizeQueue() = default;
+    FixedSizeQueue() : capacity(N) {}
 
     void push(const T& value) {
-        // 队列已满时弹出最旧元素
-        if (data.size() == N) {
-            T front_value = data.front();
+        // 如果队列已满，将队首元素出队
+        if (queue.size() == capacity) {
+            T pop_value = queue.front();
+            queue.pop();// 出队
+           
+            //更新总值
+            total_value -= pop_value;
+
             
-            // 更新最大值队列
-            if (front_value == max_deque.front()) 
-                max_deque.pop_front();
-            else if (front_value > max_deque.front()) 
-                max_deque.clear(); // 安全处理
-            
-            // 更新最小值队列
-            if (front_value == min_deque.front()) 
-                min_deque.pop_front();
-            else if (front_value < min_deque.front()) 
-                min_deque.clear(); // 安全处理
-            
-            sum -= front_value;
-            data.pop_front();
+            if(max_index>=N){// 如果最大值已经出队，查找当前队列最大值
+                std::queue<T> copy = queue;//复制队列
+                max=copy.front();//队首元素
+                int now_index=0;//当前索引
+                max_index=0;//队首元素为最大值情况
+                while (!copy.empty()) {//遍历队列
+                    T _value = copy.front();
+                    copy.pop();
+                    if (_value > max) {//更新最大值
+                        max = value;//更新最大值
+                        max_index = now_index;//更新最大值索引
+                        break;
+                    }
+                    now_index++;//更新索引
+                }
+            }
+            if(min_index>=N){// 如果最小值已经出队，查找当前队列最小值
+                std::queue<T> copy = queue;//复制队列
+                min=copy.front();//队首元素
+                int now_index=0;//当前索引
+                min_index=0;//队首元素为最小值情况
+                while (!copy.empty()) {//遍历队列
+                    T _value = copy.front();
+                    copy.pop();
+                    if (_value < min) {//更新最小值
+                        min = _value;//更新最小值
+                        min_index = now_index;//更新最小值索引
+                        break;
+                    }
+                    now_index++;//更新索引
+                }
+            }
+
+        }
+        if(queue.empty()){
+            max=value;
+            min=value;
+            max_index=0;
+            min_index=0;
+        }
+        if(value>max){
+            max=value;
+            max_index=0;
+        }
+        if(value<min){
+            min=value;
+            min_index=0;
         }
 
-        // 添加新元素
-        data.push_back(value);
-        sum += value;
-
-        // 更新最大值队列
-        while (!max_deque.empty() && value > max_deque.back()) 
-            max_deque.pop_back();
-        max_deque.push_back(value);
-
-        // 更新最小值队列
-        while (!min_deque.empty() && value < min_deque.back()) 
-            min_deque.pop_back();
-        min_deque.push_back(value);
+        total_value += value;
+        average = total_value / queue.size();
+        queue.push(value); // 添加新元素
+        max_index++;
+        min_index++;
+    }
+    T back(){
+        return queue.back();
     }
 
-    T back() const {
-        if (data.empty()) throw std::out_of_range("Queue is empty");
-        return data.back();
+    bool isEmpty(){
+        return queue.empty();
     }
 
-    T front() const {
-        if (data.empty()) throw std::out_of_range("Queue is empty");
-        return data.front();
+    size_t size(){
+        return queue.size();
+    }
+    std::queue<T> copy(){
+        return queue;
+    }
+    T get_average(){
+        return total_value / queue.size();
     }
 
-    bool isEmpty() const {
-        return data.empty();
+    T get_max(){
+        return max;
     }
 
-    size_t size() const {
-        return data.size();
+    T get_min(){
+        return min;
     }
-
-    std::queue<T> copy() const {
-        std::queue<T> q;
-        for (const T& val : data) {
-            q.push(val);
+    T* toArray(){
+        std::queue<T> copy = queue;
+        size_t index = 0;
+        while (!copy.empty()) {
+            array[index++] = copy.front();
+            copy.pop();
         }
-        return q;
-    }
-
-    T get_average() const {
-        if (data.empty()) throw std::out_of_range("Queue is empty");
-        return sum / static_cast<T>(data.size());
-    }
-
-    T get_max() const {
-        if (data.empty()) throw std::out_of_range("Queue is empty");
-        return max_deque.front();
-    }
-
-    T get_min() const {
-        if (data.empty()) throw std::out_of_range("Queue is empty");
-        return min_deque.front();
-    }
-
-    std::vector<T> toVector() const {
-        return std::vector<T>(data.begin(), data.end());
-    }
-
-    T* toArray() const {
-        T* arr = new T[N](); // 初始化为0
-        size_t i = 0;
-        for (const T& val : data) {
-            if (i >= N) break;
-            arr[i++] = val;
+        if (index < N){
+            for (size_t i = index; i < N; i++)
+            {
+                array[i] = 0;
+            }
         }
-        return arr;
+        return array;
     }
 };
-
-#endif // FIXEDSIZEQUEUE_HPP
+#endif // FixedSizeQueue_HPP
