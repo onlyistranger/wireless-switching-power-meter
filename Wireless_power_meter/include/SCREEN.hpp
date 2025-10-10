@@ -1,5 +1,5 @@
 /*
- * @LastEditors: qingmeijiupiao
+ * @LastEditors: QMJ
  * @Description: 屏幕显示相关
  * @Author: qingmeijiupiao
  * @Date: 2024-10-13 17:24:35
@@ -219,6 +219,7 @@ namespace SCREEN {
             char buffer[4];
             int time_h = POWERMETER::last_time / 3600000;
             int time_m = POWERMETER::last_time / 60000;
+            time_m = time_m % 60;
             int time_s = (POWERMETER::last_time % 60000) / 1000;
             int time_ms = POWERMETER::last_time%100;
             clk.setCursor(80, 110);

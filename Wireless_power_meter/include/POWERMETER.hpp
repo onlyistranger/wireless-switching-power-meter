@@ -1,9 +1,9 @@
 /*
- * @LastEditors: qingmeijiupiao
+ * @LastEditors: QMJ
  * @Description: 功率表相关部分
  * @note: 该文件为普通版本和PRO版本的功率表的实现，通过宏 IS_PRO_VERSION 来控制 在pltformio.ini 中添加宏定义来控制是PRO版本还是普通版
  * @Author: qingmeijiupiao
- * @LastEditTime: 2025-07-07 23:33:05
+ * @LastEditTime: 2025-10-10 19:07:12
  */
 #ifndef POWERMETER_HPP
 #define POWERMETER_HPP
@@ -89,7 +89,7 @@ namespace POWERMETER {
             //↓↓↓↓↓↓↓↓↓↓PRO版本↓↓↓↓↓↓↓↓↓↓
             voltage = PowerSensor.readBusVoltage()/1000.f; // 读取电压
             float row_data = PowerSensor.readShuntVoltage(); // 读取寄存器中的电流数据
-            last_time = millis();              // 更新上次读取时间
+            
             // 处理电流数据
             current = float(row_data)/sample_resistance;     // 转换电流数据
             //↑↑↑↑↑↑↑↑↑↑PRO版本↑↑↑↑↑↑↑↑↑↑
@@ -97,7 +97,6 @@ namespace POWERMETER {
             //↓↓↓↓↓↓↓↓↓↓普通版↓↓↓↓↓↓↓↓↓↓
             voltage = PowerSensor.getBusVoltage(); // 读取电压
             int16_t row_data = PowerSensor.getRegister(1); // 读取寄存器中的电流数据
-            last_time = millis();              // 更新上次读取时间
             // 处理电流数据
             current = float(row_data) * 0.0025/sample_resistance;     // 转换电流数据
             //↑↑↑↑↑↑↑↑↑↑普通版↑↑↑↑↑↑↑↑↑↑
@@ -109,7 +108,7 @@ namespace POWERMETER {
             // 计算输出的毫安时和毫瓦时
             output_mah += current * (millis() - last_time) / 3600.0;
             output_mwh += voltage * current * (millis() - last_time) / 3600.0;
-
+            last_time = millis();              // 更新上次读取时间
             // 更新电压队列
             voltage_queue.push(voltage);
             // 更新电流队列
